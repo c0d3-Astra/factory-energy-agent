@@ -1,0 +1,29 @@
+# docker compose up --build   ->  API on :8000, UI on :8501, DuckDB store in the "store" volume
+services:
+  api:
+    build: .
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DB_PATH: /store/energy.duckdb
+      OLLAMA_HOST: ${OLLAMA_HOST:-http://host.docker.internal:11434}   # Ollama may run on the host
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - store:/store
+    # loads the sample data on first start only; judges add their own through POST /ingest
+    command: sh -c "python scripts/load_data.py data/sample --if-empty; uvicorn app.api:app --host 0.0.0.0 --port 8000"
+    ports:
+      - "8000:8000"
+  ui:
+    build: .
+    environment:
+      API_URL: http://api:8000
+    command: streamlit run ui/streamlit_app.py --server.port 8501 --server.address 0.0.0.0 --server.headless true
+    ports:
+      - "8501:8501"
+    depends_on:
+      - api
+volumes:
+  store: {}
