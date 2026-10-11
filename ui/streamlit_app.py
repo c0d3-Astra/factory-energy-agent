@@ -629,19 +629,19 @@ with page[0]:
             if total_pct is not None:
                 st.plotly_chart(
                     chart_bridge_waterfall(bridge, total_pct, period, compare_to),
-                    use_container_width=True,
+                    use_container_width=True, key="ask_waterfall",
                 )
         with pcol:
-            st.plotly_chart(chart_cause_pie(bridge), use_container_width=True)
+            st.plotly_chart(chart_cause_pie(bridge), use_container_width=True, key="ask_cause_pie")
 
         # Cost impact bar + waste breakdown
         bcol, wbcol = st.columns(2)
         with bcol:
-            st.plotly_chart(chart_period_bar(bridge, period, compare_to), use_container_width=True)
+            st.plotly_chart(chart_period_bar(bridge, period, compare_to), use_container_width=True, key="ask_period_bar")
         with wbcol:
             wfig = chart_waste_breakdown(bridge)
             if wfig:
-                st.plotly_chart(wfig, use_container_width=True)
+                st.plotly_chart(wfig, use_container_width=True, key="ask_waste_bar")
             else:
                 st.caption("No per-meter waste breakdown available.")
 
@@ -671,11 +671,11 @@ with page[0]:
         sv_fig = chart_savings_bar(recs)
         pb_fig = chart_payback_bar(recs)
         if sv_fig:
-            st.plotly_chart(sv_fig, use_container_width=True)
+            st.plotly_chart(sv_fig, use_container_width=True, key="ask_savings_bar")
         if pb_fig:
             sa_col, pb_col = st.columns([3, 2])
             with pb_col:
-                st.plotly_chart(pb_fig, use_container_width=True)
+                st.plotly_chart(pb_fig, use_container_width=True, key="ask_payback_bar")
 
         # Rationale expanders
         with st.expander("Rationale and evidence for each action"):
@@ -704,10 +704,11 @@ with page[0]:
 
             chart_row = [f for f in [asset_pie_fig, idle_bar_fig, idle_ratio_fig] if f]
             if chart_row:
-                for colfig, fig in zip(st.columns(min(len(chart_row), 2)), chart_row[:2]):
-                    colfig.plotly_chart(fig, use_container_width=True)
+                chart_keys = ["ask_result_pie", "ask_result_idle_bar", "ask_result_idle_ratio"]
+                for colfig, fig, k in zip(st.columns(min(len(chart_row), 2)), chart_row[:2], chart_keys):
+                    colfig.plotly_chart(fig, use_container_width=True, key=k)
                 if len(chart_row) > 2:
-                    st.plotly_chart(chart_row[2], use_container_width=True)
+                    st.plotly_chart(chart_row[2], use_container_width=True, key=chart_keys[2])
 
     # ── Version diff / changes ─────────────────────────────────────────────
     changes = d.get("changes", [])
@@ -717,7 +718,7 @@ with page[0]:
         st.dataframe(df_changes, hide_index=True, use_container_width=True)
         cmp_fig = chart_comparison_bar(changes)
         if cmp_fig:
-            st.plotly_chart(cmp_fig, use_container_width=True)
+            st.plotly_chart(cmp_fig, use_container_width=True, key="ask_comparison_bar")
 
     # ── Assumptions / limitations ──────────────────────────────────────────
     a_col, l_col = st.columns(2)
@@ -813,7 +814,7 @@ with page[1]:
                 height=300, margin=dict(t=50, b=20),
                 plot_bgcolor="#0f172a", paper_bgcolor="#0f172a", font_color="#e2e8f0",
             )
-            st.plotly_chart(fig_v, use_container_width=True)
+            st.plotly_chart(fig_v, use_container_width=True, key="data_validation_bar")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -842,7 +843,7 @@ with page[2]:
 
             pie = chart_asset_pie(rows)
             if pie:
-                st.plotly_chart(pie, use_container_width=True)
+                st.plotly_chart(pie, use_container_width=True, key="explore_asset_pie")
 
     with exp_col2:
         st.markdown("#### Idle load (energy when nothing is produced)")
@@ -859,10 +860,10 @@ with page[2]:
 
             idle_bar = chart_idle_bar(rows_i)
             if idle_bar:
-                st.plotly_chart(idle_bar, use_container_width=True)
+                st.plotly_chart(idle_bar, use_container_width=True, key="explore_idle_bar")
             idle_ratio = chart_idle_ratio_bar(rows_i)
             if idle_ratio:
-                st.plotly_chart(idle_ratio, use_container_width=True)
+                st.plotly_chart(idle_ratio, use_container_width=True, key="explore_idle_ratio")
 
     # Savings / recommendations overview
     st.markdown('<p class="section-header">Savings opportunities overview</p>', unsafe_allow_html=True)
@@ -878,9 +879,9 @@ with page[2]:
         sv_fig_e = chart_savings_bar(recs_e)
         pb_fig_e = chart_payback_bar(recs_e)
         if sv_fig_e:
-            st.plotly_chart(sv_fig_e, use_container_width=True)
+            st.plotly_chart(sv_fig_e, use_container_width=True, key="explore_savings_bar")
         if pb_fig_e:
-            st.plotly_chart(pb_fig_e, use_container_width=True)
+            st.plotly_chart(pb_fig_e, use_container_width=True, key="explore_payback_bar")
 
         # CO2e reduction pie
         if recs_e:
@@ -899,7 +900,7 @@ with page[2]:
                 height=380, margin=dict(t=60, b=20),
                 plot_bgcolor="#0f172a", paper_bgcolor="#0f172a", font_color="#e2e8f0",
             )
-            st.plotly_chart(fig_co2, use_container_width=True)
+            st.plotly_chart(fig_co2, use_container_width=True, key="explore_co2_pie")
 
     # Bill decomposition summary line chart (if bridge available from Ask tab)
     d_main = st.session_state.get("answer")
@@ -930,7 +931,7 @@ with page[2]:
             height=360, margin=dict(t=60, b=20),
             plot_bgcolor="#0f172a", paper_bgcolor="#0f172a", font_color="#e2e8f0",
         )
-        st.plotly_chart(fig_trend, use_container_width=True)
+        st.plotly_chart(fig_trend, use_container_width=True, key="explore_trend_bar")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
