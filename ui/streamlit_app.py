@@ -734,14 +734,19 @@ with page[0]:
     with st.expander("Trace: every step, tool, timing and data version"):
         tr = call("GET", f"/trace/{run_id}")
         if tr:
-            # Summary metrics
+            # Summary metrics — latency_ms may be a dict or a plain float
             if "latency_ms" in tr:
                 lm = tr["latency_ms"]
                 t1, t2, t3, t4 = st.columns(4)
-                t1.metric("Total latency", f"{lm.get('total', 0):.0f} ms")
-                t2.metric("LLM latency",   f"{lm.get('llm', 0):.0f} ms")
-                t3.metric("Tool latency",  f"{lm.get('tools', 0):.1f} ms")
-                t4.metric("LLM calls",     tr.get("llm_calls", "—"))
+                if isinstance(lm, dict):
+                    t1.metric("Total latency", f"{lm.get('total', 0):.0f} ms")
+                    t2.metric("LLM latency",   f"{lm.get('llm', 0):.0f} ms")
+                    t3.metric("Tool latency",  f"{lm.get('tools', 0):.1f} ms")
+                else:
+                    t1.metric("Total latency", f"{lm:.0f} ms")
+                    t2.metric("LLM latency",   "—")
+                    t3.metric("Tool latency",  "—")
+                t4.metric("LLM calls", tr.get("llm_calls", "—"))
 
             # Steps table
             steps = tr.get("steps", [])
