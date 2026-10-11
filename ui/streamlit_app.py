@@ -779,14 +779,41 @@ with page[1]:
         with st.expander("Full health JSON"):
             st.json(hdata)
 
-    # Dataset versions
-    st.markdown('<p class="section-header">Dataset versions</p>', unsafe_allow_html=True)
-    datasets = call("GET", "/datasets")
-    if datasets:
-        df_ds = pd.DataFrame(datasets) if isinstance(datasets, list) else pd.DataFrame([datasets])
-        st.dataframe(df_ds, hide_index=True, use_container_width=True)
+    # Dataset info — sourced from /health (no /datasets endpoint exists)
+    st.markdown('<p class="section-header">Dataset info</p>', unsafe_allow_html=True)
+    if hdata:
+        ds_info = hdata.get("data_store", {})
+        dv_col, per_col = st.columns(2)
+        dv_col.metric("Data version", ds_info.get("data_version") or "—")
+        per_col.metric("Periods loaded", ", ".join(ds_info.get("periods", [])) or "none")
+
+        row_counts = ds_info.get("rows", {})
+        if row_counts:
+            df_rows = pd.DataFrame([
+                {"Table": t, "Rows": f"{n:,}"} for t, n in row_counts.items()
+            ])
+            st.dataframe(df_rows, hide_index=True, use_container_width=True)
+
+            fig_rows = go.Figure(go.Bar(
+                x=list(row_counts.keys()),
+                y=list(row_counts.values()),
+                marker_color="#3b82f6",
+                text=[f"{n:,}" for n in row_counts.values()],
+                textposition="outside",
+            ))
+            fig_rows.update_layout(
+                title="Row counts by table",
+                xaxis_title="Table", yaxis_title="Rows",
+                height=300, margin=dict(t=50, b=20),
+                plot_bgcolor="#0f172a", paper_bgcolor="#0f172a", font_color="#e2e8f0",
+            )
+            st.plotly_chart(fig_rows, use_container_width=True, key="data_row_counts_bar")
+
+        meters = ds_info.get("meters", [])
+        if meters:
+            st.caption(f"Meters: {', '.join(meters)}")
     else:
-        st.caption("No dataset version info available from API.")
+        st.caption("No dataset info available — API may be unreachable.")
 
     # Validation report
     st.markdown('<p class="section-header">Validation report</p>', unsafe_allow_html=True)
